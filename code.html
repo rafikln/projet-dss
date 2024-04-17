@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recherche d'artiste</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Recherche d'artiste</h1>
+    <form id="artistForm">
+        <label for="artistName">Nom de l'artiste:</label>
+        <input type="text" id="artistName" name="artistName">
+        <button type="submit">Rechercher</button>
+    </form>
+    <div id="artistInfo"></div>
+
+    <script>
+        document.getElementById("artistForm").addEventListener("submit", function(event) {
+            event.preventDefault(); // Empêche le rechargement de la page
+    
+            // Récupère le nom de l'artiste entré par l'utilisateur
+            let artistName = document.getElementById("artistName").value;
+    
+            fetch("http://127.0.0.1:5000/artist?name=" + encodeURIComponent(artistName))
+                .then(response => response.json())
+                .then(data => {
+                    // Affiche les informations de l'artiste dans la balise div avec l'id "artistInfo"
+                    var artistInfoDiv = document.getElementById("artistInfo");
+                    if (data.hasOwnProperty('message')) {
+                        artistInfoDiv.innerHTML = "<p>" + data.message + "</p>";
+                    } else {
+                        artistInfoDiv.innerHTML = "<h2>Informations sur l'artiste</h2>" +
+                            "<p><strong>Nom:</strong> " + data.nom + "</p>" +
+                            "<p><strong>Ville:</strong> " + data.ville + "</p>" +
+                            "<p><strong>Biographie:</strong> " + data.biographie + "</p>" +
+                            "<p><strong>Site Web:</strong> <a href='" + data.site + "'>" + data.site + "</a></p>";
+                        
+                        if (data.albums.length > 0) {
+                            artistInfoDiv.innerHTML += "<h2>Albums de l'artiste</h2>";
+                            data.albums.forEach(album => {
+                                var albumDiv = document.createElement("div");
+                                albumDiv.innerHTML = "<h3>" + album.titre + " (" + album.annee + ")</h3>";
+                                if (album.chansons.length > 0) {
+                                    var songsTable = "<table><tr><th>Chansons</th></tr>";
+                                    album.chansons.forEach(chanson => {
+                                        songsTable += "<tr><td>" + chanson + "</td></tr>";
+                                    });
+                                    songsTable += "</table>";
+                                    albumDiv.innerHTML += songsTable;
+                                } else {
+                                    albumDiv.innerHTML += "<p>Aucune chanson trouvée pour cet album.</p>";
+                                }
+                                artistInfoDiv.appendChild(albumDiv);
+                            });
+                        } else {
+                            artistInfoDiv.innerHTML += "<p>Aucun album trouvé pour cet artiste.</p>";
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Une erreur s\'est produite:', error);
+                    var artistInfoDiv = document.getElementById("artistInfo");
+                    artistInfoDiv.innerHTML = "<p>Une erreur s'est produite lors de la recherche de l'artiste.</p>";
+                });
+        });
+    </script>
+    
+</body>
+</html>
